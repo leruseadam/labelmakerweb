@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/adamcordova/Desktop/labelMaker_MAC_finalproduction/MAIN.py", line 3685, in <module>
+    main()
+  File "/Users/adamcordova/Desktop/labelMaker_MAC_finalproduction/MAIN.py", line 3674, in main
+    populate_product_names()
+  File "/Users/adamcordova/Desktop/labelMaker_MAC_finalproduction/MAIN.py", line 2629, in populate_product_names
+    df = apply_current_filters(global_df)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/adamcordova/Desktop/labelMaker_MAC_finalproduction/MAIN.py", line 2621, in apply_current_filters
+    tmp = tmp[pd.to_numeric(tmp.get(qty_col, 0), errors="coerce").fillna(0) > 0]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'fillna'
