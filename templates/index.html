@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>AGT Tag Transformer</title>
+  <style>
+    body { font-family:sans-serif; margin:0; height:100vh; }
+    .grid { display:grid; grid-template-columns: 250px 1fr 200px; height:100%; }
+    .panel { padding:1rem; overflow:auto; }
+    .left { background:#eef; }
+    .center { background:#fff; display:flex; flex-direction:column; }
+    .right { background:#efe; }
+    .list-container { flex:1; overflow:auto; border:1px solid #ccc; padding:0.5rem; }
+    label { display:block; margin:0.2rem 0; }
+    button { display:block; margin:0.5rem 0; width:100%; }
+    .flash { padding:0.5rem; margin:0.5rem 0; border-radius:4px; }
+    .flash.error   { background:#fdd; }
+    .flash.success { background:#dfd; }
+    .flash.warning { background:#ffd; }
+  </style>
+</head>
+<body>
+
+  <!-- flashes -->
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat,msg in msgs %}
+      <div class="flash {{cat}}">{{msg}}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="grid">
+
+    <!-- LEFT PANEL -->
+    <div class="panel left">
+      <h3>Load Spreadsheet</h3>
+      <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="data_file" accept=".xlsx,.xls,.csv" required/>
+        <button type="submit">Upload</button>
+      </form>
+
+      <h3>Load JSON &amp; Match</h3>
+      <form action="{{ url_for('generate', template='inventory') }}" method="post" onsubmit="addSelectedTags(this)">
+        <input type="url" name="json_url" value="{{ json_url_value or '' }}"
+               placeholder="https://…json" style="width:100%" required/>
+        <button type="submit">▶ Match JSON</button>
+      </form>
+
+      <h3>Filters</h3>
+      <form action="{{ url_for('index') }}" method="get">
+        {% for key, opts in options.items() %}
+          {% if opts %}
+            <label>{{ key|capitalize }}:
+              <select name="{{ key }}">
+                <option value="">All</option>
+                {% for v in opts %}
+                  <option value="{{ v }}" {% if request.args.get(key)==v %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          {% endif %}
+        {% endfor %}
+        <button type="submit">Apply Filters</button>
+      </form>
+
+      <form action="{{ url_for('index') }}" method="get">
+        <button>Clear Filters/JSON</button>
+      </form>
+    </div>
+
+    <!-- CENTER PANEL -->
+    <div class="panel center">
+      <h3>Available Tags</h3>
+      <div id="avail" class="list-container">
+        {% for name in available or [] %}
+          <label><input type="checkbox" class="avail-chk" value="{{ name }}" checked> {{ name }}</label>
+        {% endfor %}
+      </div>
+
+      <div style="text-align:center; margin:1rem 0;">
+        <button type="button" onclick="move('avail','sel')">&gt;</button>
+        <button type="button" onclick="move('sel','avail')">&lt;</button>
+      </div>
+
+      <h3>Selected Tags</h3>
+      <div id="sel" class="list-container">
+        {% for name in selected or [] %}
+          <label><input type="checkbox" class="sel-chk" value="{{ name }}"> {{ name }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel right">
+      <h3>Actions</h3>
+      <form id="form_horizontal" action="{{ url_for('generate', template='horizontal') }}" method="post" onsubmit="addSelectedTags(this)">
+        <button type="submit">▭ Horizontal Tags</button>
+      </form>
+      <form id="form_vertical" action="{{ url_for('generate', template='vertical') }}" method="post" onsubmit="addSelectedTags(this)">
+        <button type="submit">▯ Vertical Tags</button>
+      </form>
+      <form id="form_mini" action="{{ url_for('generate', template='mini') }}" method="post" onsubmit="addSelectedTags(this)">
+        <button type="submit">⬜ Mini Tags</button>
+      </form>
+      <button type="button" onclick="alert('Edit Template')">🖊️ Edit Template</button>
+      <button type="button" onclick="alert('Fix Lineage')">🎨 Fix Lineage</button>
+    </div>
+  </div>
+
+  <script>
+    function move(fromId, toId) {
+      const from = document.getElementById(fromId),
+            to   = document.getElementById(toId);
+      let boxes = from.querySelectorAll('input[type="checkbox"]');
+      let chosen = Array.from(boxes).filter(chk => chk.checked);
+      if (chosen.length === 0) {
+        chosen = Array.from(boxes);
+      }
+      chosen.forEach(chk => {
+        chk.checked = false;
+        to.appendChild(chk.parentElement);
+      });
+    }
+    function addSelectedTags(form) {
+      const selDiv = document.getElementById('sel');
+      const boxes = selDiv.querySelectorAll('input[type="checkbox"]');
+      boxes.forEach(chk => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'selected_tags';
+        inp.value = chk.value;
+        form.appendChild(inp);
+      });
+    }
+  </script>
+</body>
+</html>
